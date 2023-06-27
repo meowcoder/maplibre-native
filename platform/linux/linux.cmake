@@ -135,60 +135,34 @@ target_link_libraries(
         mbgl-vendor-sqlite
 )
 
-add_subdirectory(${PROJECT_SOURCE_DIR}/bin)
-add_subdirectory(${PROJECT_SOURCE_DIR}/expression-test)
-add_subdirectory(${PROJECT_SOURCE_DIR}/platform/glfw)
-if(MLN_WITH_NODE)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/platform/node)
-endif()
-
-add_executable(
-    mbgl-test-runner
-    ${PROJECT_SOURCE_DIR}/platform/default/src/mbgl/test/main.cpp
+include(GNUInstallDirs)
+install(
+    DIRECTORY
+      include/mbgl
+      platform/default/include/mbgl
+      vendor/mapbox-base/include/mapbox
+      vendor/mapbox-base/deps/geometry.hpp/include/mapbox
+      vendor/mapbox-base/deps/variant/include/mapbox
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+    COMPONENT development
 )
 
-target_compile_definitions(
-    mbgl-test-runner
-    PRIVATE WORK_DIRECTORY=${PROJECT_SOURCE_DIR}
+install(
+    FILES
+      vendor/mapbox-base/deps/optional/optional.hpp
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/mapbox"
+    COMPONENT development
 )
 
-target_link_libraries(
-    mbgl-test-runner
-    PRIVATE
-        mbgl-compiler-options
-        -Wl,--whole-archive
-        mbgl-test
-        -Wl,--no-whole-archive
+install(
+  TARGETS
+        mbgl-core
+        mbgl-vendor-nunicode
+        mbgl-vendor-sqlite
+        mbgl-vendor-icu
+        mbgl-vendor-csscolorparser
+        mbgl-vendor-parsedate
+  ARCHIVE
+  DESTINATION "${CMAKE_INSTALL_LIBDIR}"
 )
 
-add_executable(
-    mbgl-benchmark-runner
-    ${PROJECT_SOURCE_DIR}/platform/default/src/mbgl/benchmark/main.cpp
-)
-
-target_link_libraries(
-    mbgl-benchmark-runner
-    PRIVATE
-        mbgl-compiler-options
-        -Wl,--whole-archive
-        mbgl-benchmark
-        -Wl,--no-whole-archive
-)
-
-add_executable(
-    mbgl-render-test-runner
-    ${PROJECT_SOURCE_DIR}/platform/default/src/mbgl/render-test/main.cpp
-)
-
-target_link_libraries(
-    mbgl-render-test-runner
-    PRIVATE mbgl-compiler-options mbgl-render-test
-)
-
-# Disable benchmarks in CI as they run in VM environment
-if(NOT DEFINED ENV{CI})
-    add_test(NAME mbgl-benchmark-runner COMMAND mbgl-benchmark-runner WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
-endif()
-add_test(NAME mbgl-test-runner COMMAND mbgl-test-runner WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
-
-install(TARGETS mbgl-render-test-runner RUNTIME DESTINATION bin)
